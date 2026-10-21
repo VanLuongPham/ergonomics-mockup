@@ -1,123 +1,46 @@
 'use client'
 
 import Image from 'next/image'
-import { Lock, Sparkles, Trash2 } from 'lucide-react'
+import { Check, ChevronDown, Lock, Minus, Plus, ShoppingBag, Sparkles, Trash2, X } from 'lucide-react'
+import { useState } from 'react'
 import { useAgent } from '@/components/agent/agent-provider'
 import { AgentTag, Stars } from '@/components/agent/agent-tag'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
 import { PRODUCT_BY_ID, formFactorLabel } from '@/lib/catalog'
 
+const REVIEWS: Record<string, { title: string; body: string; author: string; date: string }[]> = {
+  'sonari-halo': [{ title: 'Quiet without feeling closed in', body: 'The cabin silence is excellent and the cushions stay comfortable on long flights. Calls are clear enough for work.', author: 'Maya R.', date: '2 weeks ago' }, { title: 'Premium, dependable travel pair', body: 'Battery easily lasts my commute week. The app is simple and multipoint switching is reliable.', author: 'Chris T.', date: '1 month ago' }],
+  'aurel-q7': [{ title: 'Battery champ', body: 'I charged these once for a weekend trip and never thought about them again. The fold-flat case is useful.', author: 'Jordan K.', date: '3 weeks ago' }, { title: 'Comfortable fit', body: 'A little less detailed than my old pair, but the value and battery life are hard to beat.', author: 'Rina L.', date: '2 months ago' }],
+  'velo-studio': [{ title: 'Big sound for the money', body: 'Warm bass and an impressive battery. They are heavier, but I like the solid build.', author: 'Devon P.', date: '1 week ago' }],
+  'kiro-air': [{ title: 'Very light', body: 'I forget I am wearing them. Great everyday battery and a comfortable clamp.', author: 'Sam W.', date: '3 weeks ago' }],
+  'brava-monitor': [{ title: 'The detail is special', body: 'These sound like a proper reference set but remain easy to use day to day.', author: 'Alex N.', date: '5 days ago' }],
+  'sonari-buds': [{ title: 'Best ANC I have tried in earbuds', body: 'Tiny case, excellent transparency mode, and they stay secure during my commute.', author: 'Priya S.', date: '1 week ago' }],
+  'pulse-sport': [{ title: 'They do not move', body: 'The ear hooks are comfortable and the water protection gives me confidence at the gym.', author: 'Taylor J.', date: '1 month ago' }],
+  'aurel-dot': [{ title: 'Simple and affordable', body: 'Good starter earbuds with a tiny case. Easy recommendation under one hundred dollars.', author: 'Lee M.', date: '2 months ago' }],
+  'halden-work': [{ title: 'Excellent for meetings', body: 'People notice the microphone difference immediately. They are comfortable through a full workday.', author: 'Nico B.', date: '3 weeks ago' }],
+  'velo-buds': [{ title: 'Clear calls and balanced sound', body: 'They pair quickly and the fit is stable. ANC is good for an office or train.', author: 'Morgan C.', date: '1 month ago' }],
+}
+
 export function CartDrawer() {
   const agent = useAgent()
   const { cart, cartOpen } = agent.state
+  const [checkout, setCheckout] = useState(false)
   const subtotal = cart.reduce((a, c) => a + PRODUCT_BY_ID[c.productId].price * c.qty, 0)
-
   return (
     <Modal open={cartOpen} onClose={() => agent.setCartOpen(false)} title="Your cart" side="right">
       <div className="flex h-full flex-col">
-        {cart.length === 0 ? (
-          <p className="p-6 text-sm text-muted-foreground">Your cart is empty.</p>
-        ) : (
-          <ul className="flex flex-col divide-y">
-            {cart.map((item) => {
-              const p = PRODUCT_BY_ID[item.productId]
-              return (
-                <li key={item.key} className="flex gap-3 p-4">
-                  <Image src={p.image || '/placeholder.svg'} alt={p.name} width={72} height={72} className="rounded-lg bg-muted" />
-                  <div className="flex flex-1 flex-col gap-1">
-                    <span className="text-sm font-medium">{p.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {item.color} · Qty {item.qty}
-                    </span>
-                    {item.addedBy === 'agent' ? (
-                      <AgentTag className="self-start">Added by assistant, with your OK</AgentTag>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">Added by you</span>
-                    )}
-                  </div>
-                  <div className="flex flex-col items-end justify-between">
-                    <span className="text-sm font-semibold">${p.price * item.qty}</span>
-                    <button
-                      type="button"
-                      onClick={() => agent.removeFromCart(item.key)}
-                      className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                      aria-label={`Remove ${p.name}`}
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-        <div className="mt-auto flex flex-col gap-3 border-t p-4">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Subtotal</span>
-            <span className="font-semibold">${subtotal}</span>
-          </div>
-          <Button size="lg" disabled className="w-full">
-            <Lock />
-            Checkout
-          </Button>
-          <p className="text-center text-xs text-muted-foreground">Purchasing is disabled in this prototype.</p>
-        </div>
+        {cart.length === 0 ? <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center"><ShoppingBag className="size-10 text-muted-foreground" /><p className="font-medium">Your cart is empty</p><p className="text-sm text-muted-foreground">Add a product to see it here.</p></div> : <ul className="flex flex-col divide-y">{cart.map((item) => { const p = PRODUCT_BY_ID[item.productId]; return <li key={item.key} className="flex gap-3 p-4"><Image src={p.image} alt={p.name} width={72} height={72} className="rounded-lg bg-muted object-cover" /><div className="flex min-w-0 flex-1 flex-col gap-1"><span className="text-sm font-medium">{p.name}</span><span className="text-xs text-muted-foreground">{item.color} · Qty {item.qty}</span>{item.addedBy === 'agent' ? <AgentTag className="self-start">Added with your OK</AgentTag> : <span className="text-xs text-muted-foreground">Added by you</span>}</div><div className="flex flex-col items-end justify-between"><span className="text-sm font-semibold">${p.price * item.qty}</span><button type="button" onClick={() => agent.removeFromCart(item.key)} className="rounded-md p-1 text-muted-foreground hover:bg-muted" aria-label={`Remove ${p.name}`}><Trash2 className="size-4" /></button></div></li> })}</ul>}
+        <div className="mt-auto flex flex-col gap-3 border-t p-4"><div className="flex justify-between text-sm"><span className="text-muted-foreground">Subtotal</span><span className="font-semibold">${subtotal}</span></div><Button size="lg" disabled={!cart.length} className="w-full" onClick={() => setCheckout(true)}><Lock />Review checkout</Button><p className="text-center text-xs text-muted-foreground">Demo checkout only. No payment will be taken.</p></div>
       </div>
+      <Modal open={checkout} onClose={() => setCheckout(false)} title="Review your order" description="This prototype stops before payment."><div className="flex flex-col gap-5 p-5"><div className="rounded-xl bg-muted/60 p-4 text-sm"><div className="mb-3 flex items-center gap-2 font-medium"><Check className="size-4 text-agent-foreground" /> Ready for your review</div>{cart.map((item) => <div key={item.key} className="flex justify-between py-1"><span>{PRODUCT_BY_ID[item.productId].name} × {item.qty}</span><span>${PRODUCT_BY_ID[item.productId].price * item.qty}</span></div>)}<div className="mt-3 flex justify-between border-t pt-3 font-semibold"><span>Total</span><span>${subtotal}</span></div></div><div className="flex gap-2"><Button variant="outline" className="flex-1" onClick={() => setCheckout(false)}>Keep shopping</Button><Button className="flex-1" onClick={() => setCheckout(false)}><Check />Place demo order</Button></div><p className="text-center text-xs text-muted-foreground">No account, address, or payment details are requested.</p></div></Modal>
     </Modal>
   )
 }
 
 export function QuickView() {
-  const agent = useAgent()
-  const { quickViewId, brief } = agent.state
-  const p = quickViewId ? PRODUCT_BY_ID[quickViewId] : null
-
-  return (
-    <Modal open={!!p} onClose={() => agent.setQuickView(null)} title={p?.name ?? ''} description={p?.blurb}>
-      {p && (
-        <div className="grid gap-5 p-5 sm:grid-cols-2">
-          <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
-            <Image src={p.image || '/placeholder.svg'} alt={p.name} fill sizes="320px" className="object-cover" />
-          </div>
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1">
-              <span className="text-2xl font-semibold">${p.price}</span>
-              <Stars rating={p.rating} />
-            </div>
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-              {[
-                ['Type', formFactorLabel(p.formFactor)],
-                ['Battery', `${p.specs.battery} h`],
-                ['Noise cancelling', `${p.specs.anc}/10`],
-                ['Sound', `${p.specs.sound}/10`],
-                ['Call quality', `${p.specs.mic}/10`],
-                ['Comfort', `${p.specs.comfort}/10`],
-                ['Weight', `${p.specs.weight} g`],
-                ['Water rating', p.specs.water],
-                ['Multipoint', p.specs.multipoint ? 'Yes' : 'No'],
-                ['Codec', p.specs.codec],
-              ].map(([k, v]) => (
-                <div key={k} className="flex flex-col">
-                  <dt className="text-xs text-muted-foreground">{k}</dt>
-                  <dd className="font-medium">{v}</dd>
-                </div>
-              ))}
-            </dl>
-            <div className="mt-auto flex flex-col gap-2">
-              <Button size="lg" onClick={() => agent.addToCart(p.id)}>
-                Add to cart
-              </Button>
-              {brief && (
-                <Button size="lg" variant="outline" onClick={() => agent.askAbout(p.id)}>
-                  <Sparkles />
-                  Ask assistant how this fits my brief
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </Modal>
-  )
+  const agent = useAgent(); const { quickViewId, brief } = agent.state; const p = quickViewId ? PRODUCT_BY_ID[quickViewId] : null; const [color, setColor] = useState(p?.colors[0] ?? ''); const [qty, setQty] = useState(1); const [tab, setTab] = useState<'details' | 'reviews'>('details')
+  if (!p) return null
+  const reviews = REVIEWS[p.id] ?? []
+  return <Modal open={!!p} onClose={() => agent.setQuickView(null)} title={p.name} description={`${p.brand} · ${formFactorLabel(p.formFactor)}`}><div className="grid gap-6 p-5 sm:grid-cols-2"><div className="flex flex-col gap-3"><div className="relative aspect-square overflow-hidden rounded-xl bg-muted"><Image src={p.image} alt={p.name} fill sizes="(max-width: 640px) 90vw, 320px" className="object-cover" /></div><div className="flex gap-1 rounded-lg bg-muted p-1"><button type="button" onClick={() => setTab('details')} className={`flex-1 rounded-md py-2 text-sm ${tab === 'details' ? 'bg-background font-medium shadow-sm' : 'text-muted-foreground'}`}>Details</button><button type="button" onClick={() => setTab('reviews')} className={`flex-1 rounded-md py-2 text-sm ${tab === 'reviews' ? 'bg-background font-medium shadow-sm' : 'text-muted-foreground'}`}>Reviews ({p.reviews.toLocaleString()})</button></div></div><div className="flex min-w-0 flex-col gap-4">{tab === 'details' ? <><div><div className="flex items-baseline gap-2"><span className="text-2xl font-semibold">${p.price}</span>{p.listPrice && <span className="text-sm text-muted-foreground line-through">${p.listPrice}</span>}</div><div className="mt-1 flex items-center gap-2"><Stars rating={p.rating} /><span className="text-sm text-muted-foreground">{p.rating} · {p.reviews.toLocaleString()} reviews</span></div><p className="mt-3 text-sm leading-relaxed text-muted-foreground">{p.blurb} Designed for people who want dependable everyday audio, with thoughtful controls and a comfortable fit.</p></div><div className="grid grid-cols-2 gap-3 rounded-xl border p-3 text-sm"><div><span className="text-xs text-muted-foreground">Battery</span><p className="font-medium">{p.specs.battery} hours</p></div><div><span className="text-xs text-muted-foreground">Noise cancelling</span><p className="font-medium">{p.specs.anc}/10</p></div><div><span className="text-xs text-muted-foreground">Call quality</span><p className="font-medium">{p.specs.mic}/10</p></div><div><span className="text-xs text-muted-foreground">Water rating</span><p className="font-medium">{p.specs.water}</p></div></div><div><label className="text-sm font-medium">Color</label><div className="mt-2 flex flex-wrap gap-2">{p.colors.map((c) => <button key={c} type="button" onClick={() => setColor(c)} className={`rounded-full border px-3 py-1.5 text-sm ${color === c ? 'border-primary bg-primary/10 font-medium' : 'hover:bg-muted'}`}>{c}</button>)}</div></div><div className="flex items-center gap-3"><span className="text-sm font-medium">Quantity</span><div className="flex items-center rounded-lg border"><button type="button" onClick={() => setQty(Math.max(1, qty - 1))} className="p-2" aria-label="Decrease quantity"><Minus className="size-4" /></button><span className="w-8 text-center text-sm">{qty}</span><button type="button" onClick={() => setQty(Math.min(9, qty + 1))} className="p-2" aria-label="Increase quantity"><Plus className="size-4" /></button></div></div><div className="mt-auto flex flex-col gap-2"><Button size="lg" onClick={() => { for (let i = 0; i < qty; i++) agent.addToCart(p.id); agent.setQuickView(null) }}>Add to cart · ${p.price * qty}</Button>{brief && <Button size="lg" variant="outline" onClick={() => agent.askAbout(p.id)}><Sparkles />Ask assistant about this</Button>}</div></> : <div className="flex flex-col gap-4">{reviews.map((r) => <article key={r.title} className="border-b pb-4"><div className="flex items-center justify-between"><Stars rating={5} /><span className="text-xs text-muted-foreground">{r.date}</span></div><h3 className="mt-2 font-medium">{r.title}</h3><p className="mt-1 text-sm leading-relaxed text-muted-foreground">{r.body}</p><p className="mt-2 text-xs font-medium">{r.author} · Verified buyer</p></article>)}<div className="rounded-xl bg-muted/60 p-3 text-sm"><strong>What shoppers mention:</strong> comfort, battery life, and easy pairing.</div></div>}</div></div></Modal>
 }
