@@ -384,9 +384,11 @@ function useAgentController() {
         await wait(900, runId)
         const brief = parseQuery(query)
         for (const a of brief.assumptions) log('reasoning', a)
-        update((s) => ({ ...s, brief, phase: 'brief', steps: { ...s.steps, understand: 'waiting' } }))
+        update((s) => ({ ...s, brief, phase: 'brief', steps: { ...s.steps, understand: 'done' } }))
         addMessage({ role: 'agent', kind: 'brief', brief })
-        log('checkpoint', 'Waiting for you to confirm the brief before searching.')
+        log('action', 'Brief understood. Starting a catalog search with these assumptions — you can adjust them anytime.')
+        await wait(500, runId)
+        await runFromSearch(runId)
       })
     },
     [track, update, log, guard, wait, addMessage],
